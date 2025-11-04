@@ -1,4 +1,4 @@
-import { Star, Download, Code, Terminal, Palette, Database, Globe, Book } from "lucide-react";
+import { Star, Download, Code, Terminal, Palette, Database, Globe, Book, Filter } from "lucide-react";
 import { useMemo, useState } from "react";
 
 const iconMap = {
@@ -18,7 +18,7 @@ function Badge({ children }) {
   );
 }
 
-function Card({ item, onToggleFav }) {
+function Card({ item, onToggleFav, onDownload }) {
   const Icon = iconMap[item.category] || iconMap.default;
   return (
     <div className="group relative flex flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md">
@@ -53,7 +53,10 @@ function Card({ item, onToggleFav }) {
 
       <div className="mt-4 flex items-center justify-between">
         <div className="text-xs text-gray-500">{item.downloads.toLocaleString()} downloads</div>
-        <button className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50">
+        <button
+          onClick={() => onDownload(item)}
+          className="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+        >
           <Download size={16} />
           Download
         </button>
@@ -62,7 +65,7 @@ function Card({ item, onToggleFav }) {
   );
 }
 
-export default function CheatSheetGrid({ items, query, category, onToggleFav, onlyPopular }) {
+export default function CheatSheetGrid({ sectionId, items, query, category, onToggleFav, onDownload, onlyPopular }) {
   const [sort, setSort] = useState("popular");
 
   const filtered = useMemo(() => {
@@ -85,9 +88,9 @@ export default function CheatSheetGrid({ items, query, category, onToggleFav, on
   }, [items, query, category, sort, onlyPopular]);
 
   return (
-    <section className="mx-auto max-w-6xl px-4 sm:px-6 mt-10">
+    <section id={sectionId} className="mx-auto max-w-6xl px-4 sm:px-6 mt-10">
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 id="popular" className="text-xl font-bold text-gray-900">{onlyPopular ? "Popular" : "Browse"} cheat sheets</h2>
+        <h2 className="text-xl font-bold text-gray-900">{onlyPopular ? "Popular" : "Browse"} cheat sheets</h2>
         <div className="flex items-center gap-2 text-sm">
           <label className="text-gray-600">Sort by</label>
           <select
@@ -104,7 +107,7 @@ export default function CheatSheetGrid({ items, query, category, onToggleFav, on
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((item) => (
-          <Card key={item.id} item={item} onToggleFav={onToggleFav} />
+          <Card key={item.id} item={item} onToggleFav={onToggleFav} onDownload={onDownload} />
         ))}
         {filtered.length === 0 && (
           <div className="col-span-full rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-500">

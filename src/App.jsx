@@ -77,8 +77,10 @@ export default function App() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("all");
   const [items, setItems] = useState(seedData);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
 
   const popular = useMemo(() => items.filter((i) => i.downloads > 8000), [items]);
+  const favoritesCount = useMemo(() => items.filter((i) => i.favorite).length, [items]);
 
   const handleToggleFav = (id) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, favorite: !i.favorite } : i)));
@@ -101,25 +103,58 @@ export default function App() {
     setItems((prev) => [newItem, ...prev]);
   };
 
+  const handleDownload = (item) => {
+    // Increment download count locally
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, downloads: i.downloads + 1 } : i)));
+    // Generate a simple text file to download
+    const content = `Title: ${item.title}\nAuthor: ${item.author}\nCategory: ${item.category}\nTags: ${item.tags.join(", ")}\n\nDescription:\n${item.description}\n`;
+    const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${item.title.replace(/[^a-z0-9\- ]/gi, "_").replace(/\s+/g, "_")}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleToggleFavoritesFilter = () => setFavoritesOnly((v) => !v);
+
+  // Apply favoritesOnly to the full browse list (second section)
+  const browseItems = useMemo(() => {
+    return favoritesOnly ? items.filter((i) => i.favorite) : items;
+  }, [items, favoritesOnly]);
+
   return (
     <div className="min-h-screen bg-white text-gray-900">
-      <Navbar onCreate={handleCreate} />
+      <Navbar
+        onCreate={handleCreate}
+        onToggleFavoritesFilter={handleToggleFavoritesFilter}
+        favoritesActive={favoritesOnly}
+        favoritesCount={favoritesCount}
+      />
+
       <HeroSearch query={query} setQuery={setQuery} />
       <CategoryTabs active={category} onChange={setCategory} />
 
       <CheatSheetGrid
+        sectionId="popular"
         items={popular}
         query={query}
         category={category}
         onToggleFav={handleToggleFav}
+        onDownload={handleDownload}
         onlyPopular
       />
 
       <CheatSheetGrid
-        items={items}
+        sectionId="latest"
+        items={browseItems}
         query={query}
         category={category}
         onToggleFav={handleToggleFav}
+        onDownload={handleDownload}
       />
 
       <footer className="mt-16 border-t border-gray-200 bg-gray-50">
